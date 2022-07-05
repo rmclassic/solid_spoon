@@ -17,7 +17,7 @@ def preprocess_document(doc):
 #     doc = nltk.sent_tokenize(doc)
 #     return doc
 
-def getCollectionBorder(col):
+def getCollectionVector(col):
     border = {}
     for index, doc in enumerate(col):
         if index % 100 == 0:
