@@ -6,32 +6,9 @@ import util
 import json
 from window import getWindowJaccard
 
-newsgroups_train = fetch_20newsgroups(subset='train')
-
+newsgroups_train = fetch_20newsgroups(subset='train', remove=('headers', 'footers', 'quotes'))
 data_tokens = []
 documents = []
-# for d in newsgroups_train.data:
-#   # data_tokens.append(word_tokenize(d))
-#   sentences = nltk.sent_tokenize(d)
-#   documents.append(sentences)
-#
-#
-# sims = {}
-# for i in range(200):#range(len(documents)):
-#     d = documents[i]
-#     #if i % 100 == 0:
-#     print('processed ', i, '/', len(documents),' documents')
-#
-#     jacs = getWindowJaccard(d)
-#     for jac in jacs:
-#         if jac['jaccard'] > 0.5:
-#             if jac['w1'] in sims:
-#                 if jac['w1'] != jac['w2']:
-#                     sims[jac['w1']].append(jac['w2'])
-#             else:
-#                 sims[jac['w1']] = [jac['w2'],]
-#
-# print(sims)
 
 def save_state(data, tag):
     dstr = json.dumps(data)
@@ -52,7 +29,7 @@ def load_state(tag):
 
 data = load_state('preprocess')
 if data == None:
-    data = newsgroups_train.data[:2000]
+    data = newsgroups_train.data
     for i, doc in enumerate(data):
         data[i] = util.preprocess_document(doc)
 
@@ -67,9 +44,10 @@ word_borders = load_state('border_generation')
 if word_borders == None:
     word_borders = []
     for i, word in enumerate(base_border):
-        print('generating word border for \'' + word + '\':' , i, '/', len(base_border))
+        if i % 100 == 0:
+            print('generating word border for \'' + word + '\':' , i, '/', len(base_border))
+
         w_border = util.getWordBorder(base_border, word, data)
-        print({'word': word, 'border': w_border})
         word_borders.append({'word': word, 'border': w_border})
 
     save_state(word_borders, 'border_generation')
@@ -77,7 +55,8 @@ else:
     print('border_generation: using previous state')
 
 print('calculating similarities')
-
+print(len(word_borders))
+input()
 similarities = load_state('similarity_calculation')
 
 if similarities == None:

@@ -11,7 +11,7 @@ def preprocess_document(doc):
     doc = nltk.word_tokenize(doc)
     processed = []
     processed = list(filter(lambda l:len(l) >= 3 and l.isalpha() and l not in sw, list(map(lambda x:x.lower(), doc))))
-    return processed
+    return list(set(processed))
 
 # def preprocess_document_sent(doc):
 #     doc = nltk.sent_tokenize(doc)
