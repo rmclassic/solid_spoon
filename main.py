@@ -4,8 +4,10 @@ from nltk.tokenize import word_tokenize
 import nltk
 import util
 import json
-from window import getWindowJaccard
+import window
 
+print(window.ejtema('hey', 'wowy'))
+input()
 newsgroups_train = fetch_20newsgroups(subset='train')
 
 data_tokens = []
@@ -52,7 +54,10 @@ def load_state(tag):
 
 data = load_state('preprocess')
 if data == None:
-    data = newsgroups_train.data[:2000]
+    data = []
+    for doc in newsgroups_train.data[:2000]:
+        data += util.preprocess_document_sent(doc)
+
     for i, doc in enumerate(data):
         data[i] = util.preprocess_document(doc)
 

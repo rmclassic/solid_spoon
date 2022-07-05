@@ -13,9 +13,9 @@ def preprocess_document(doc):
     processed = list(filter(lambda l:len(l) >= 3 and l.isalpha() and l not in sw, list(map(lambda x:x.lower(), doc))))
     return processed
 
-# def preprocess_document_sent(doc):
-#     doc = nltk.sent_tokenize(doc)
-#     return doc
+def preprocess_document_sent(doc):
+    doc = nltk.sent_tokenize(doc)
+    return doc
 
 def getCollectionBorder(col):
     border = {}
@@ -44,7 +44,8 @@ def getWordWindows(word, doc):
             last_index = -1
             continue
 
-        window = makeWindowAround(last_index, doc)
+        window = doc
+        #window = makeWindowAround(last_index, doc)
         windows.append(window)
 
     #print(word)

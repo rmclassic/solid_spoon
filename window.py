@@ -17,8 +17,13 @@ def intersection(l1, l2):
 
 def ejtema(l1, l2):
     isc = []
-    isc.extend([value for value in l1 if value != ''])
-    isc.extend([value for value in l2 if value not in l1 and value != ''])
+    for value in l1:
+        if value != '':
+            isc.append(value)
+
+    for value in l2:
+        if value not in isc and value != '':
+            isc.append(value)
     return isc
 
 def sanitize(l):
