@@ -6,34 +6,11 @@ import util
 import json
 import window
 
-print(window.ejtema('hey', 'wowy'))
-input()
-newsgroups_train = fetch_20newsgroups(subset='train')
+newsgroups_train = fetch_20newsgroups(subset='train', remove=('headers', 'footers', 'quotes'))
 
 data_tokens = []
 documents = []
-# for d in newsgroups_train.data:
-#   # data_tokens.append(word_tokenize(d))
-#   sentences = nltk.sent_tokenize(d)
-#   documents.append(sentences)
-#
-#
-# sims = {}
-# for i in range(200):#range(len(documents)):
-#     d = documents[i]
-#     #if i % 100 == 0:
-#     print('processed ', i, '/', len(documents),' documents')
-#
-#     jacs = getWindowJaccard(d)
-#     for jac in jacs:
-#         if jac['jaccard'] > 0.5:
-#             if jac['w1'] in sims:
-#                 if jac['w1'] != jac['w2']:
-#                     sims[jac['w1']].append(jac['w2'])
-#             else:
-#                 sims[jac['w1']] = [jac['w2'],]
-#
-# print(sims)
+
 
 def save_state(data, tag):
     dstr = json.dumps(data)
@@ -54,10 +31,7 @@ def load_state(tag):
 
 data = load_state('preprocess')
 if data == None:
-    data = []
-    for doc in newsgroups_train.data[:2000]:
-        data += util.preprocess_document_sent(doc)
-
+    data = newsgroups_train.data[:200]
     for i, doc in enumerate(data):
         data[i] = util.preprocess_document(doc)
 
@@ -65,39 +39,14 @@ if data == None:
 else:
     print('preprocess: using previous state')
 
-base_border = util.getCollectionBorder(data)
+words = list(util.getCollectionBorder(data).keys())
 
-word_borders = load_state('border_generation')
 
-if word_borders == None:
-    word_borders = []
-    for i, word in enumerate(base_border):
-        print('generating word border for \'' + word + '\':' , i, '/', len(base_border))
-        w_border = util.getWordBorder(base_border, word, data)
-        print({'word': word, 'border': w_border})
-        word_borders.append({'word': word, 'border': w_border})
+jaccards = load_state('jaccard_calculation')
 
-    save_state(word_borders, 'border_generation')
-else:
-    print('border_generation: using previous state')
-
-print('calculating similarities')
-
-similarities = load_state('similarity_calculation')
-
-if similarities == None:
-    similarities = []
-    for i, w1_border in enumerate(word_borders):
-        for j, w2_border in enumerate(word_borders[i + 1:]):
-            w_sim = util.calculateBorderSimilarity(w1_border, w2_border)
-
-            if w_sim != 0 and w_sim > 0.1:
-                similarities.append({'w1': w1_border['word'], 'w2': w2_border['word'], 'similarity': w_sim})
-                print({'w1': w1_border['word'], 'w2': w2_border['word'], 'similarity': w_sim})
-    save_state(similarities, 'similarity_calculation')
-
-else:
-    print('similarity_calculation: using previous state')
-
-for s in similarities:
-    print(s)
+if jaccards == None:
+    for i, word in enumerate(words):
+        for j in range(i + 1, len(words)):
+            jac = window.calculateJaccard(words[i], words[j])
+            if jac > 0.9:
+                print({'w1': words[i], 'w2': words[j], 'jaccard': jac})

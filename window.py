@@ -12,8 +12,8 @@ import pprint
 
 
 def intersection(l1, l2):
-    isc = [value for value in l1 if value in l2 if value != ''];
-    return isc
+    isc = [value for value in l1 if value in l2 if value != '']
+    return list(set(isc))
 
 def ejtema(l1, l2):
     isc = []
@@ -53,6 +53,10 @@ def generateWindows(winlen, data):
             windows.append(lwindow)
 
     return windows
+
+def calculateJaccard(l1, l2):
+    isc = intersection(l1, l2)
+    return len(isc) / (len(l1) + len(l2) - len(isc))
 
 
 def getWindowJaccard(data):
