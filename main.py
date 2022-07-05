@@ -5,10 +5,8 @@ import nltk
 import util
 import json
 from window import getWindowJaccard
+import threading
 
-newsgroups_train = fetch_20newsgroups(subset='train', remove=('headers', 'footers', 'quotes'))
-data_tokens = []
-documents = []
 
 def save_state(data, tag):
     dstr = json.dumps(data)
@@ -27,51 +25,74 @@ def load_state(tag):
     return data
 
 
-data = load_state('preprocess')
-if data == None:
-    data = newsgroups_train.data
-    for i, doc in enumerate(data):
-        data[i] = util.preprocess_document(doc)
 
-    save_state(data, 'preprocess')
-else:
-    print('preprocess: using previous state')
+if __name__ == "__main__":
 
-base_border = util.getCollectionBorder(data)
+    newsgroups_train = fetch_20newsgroups(subset='train', remove=('headers', 'footers', 'quotes'))
+    data_tokens = []
+    documents = []
 
-word_borders = load_state('border_generation')
 
-if word_borders == None:
-    word_borders = []
-    for i, word in enumerate(base_border):
-        if i % 100 == 0:
-            print('generating word border for \'' + word + '\':' , i, '/', len(base_border))
 
-        w_border = util.getWordBorder(base_border, word, data)
-        word_borders.append({'word': word, 'border': w_border})
 
-    save_state(word_borders, 'border_generation')
-else:
-    print('border_generation: using previous state')
+    data = load_state('preprocess')
+    if data == None:
+        data = newsgroups_train.data
+        for i, doc in enumerate(data):
+            data[i] = util.preprocess_document(doc)
 
-print('calculating similarities')
-print(len(word_borders))
-input()
-similarities = load_state('similarity_calculation')
+        save_state(data, 'preprocess')
+    else:
+        print('preprocess: using previous state')
 
-if similarities == None:
-    similarities = []
-    for i, w1_border in enumerate(word_borders):
-        for j, w2_border in enumerate(word_borders[i + 1:]):
-            w_sim = util.calculateBorderSimilarity(w1_border, w2_border)
+    base_border = util.getCollectionVector(data)
+
+    word_borders = load_state('border_generation')
+
+    if word_borders == None:
+        word_borders = []
+        for i, word in enumerate(base_border):
+            if i % 100 == 0:
+                print('generating word border for \'' + word + '\':' , i, '/', len(base_border))
+
+            w_border = util.getWordBorder(base_border, word, data)
+            word_borders.append({'word': word, 'border': w_border})
+
+        save_state(word_borders, 'border_generation')
+    else:
+        print('border_generation: using previous state')
+
+    print('calculating similarities')
+    print(len(word_borders))
+    input()
+    similarities = load_state('similarity_calculation')
+
+    def _handle_similarity_calculation(index:int, word:str):
+        for j, w2_border in enumerate(word_borders[index + 1:]):
+            w_sim = util.calculateBorderSimilarity(word, w2_border)
 
             if w_sim != 0 and w_sim > 0.1:
                 similarities.append({'w1': w1_border['word'], 'w2': w2_border['word'], 'similarity': w_sim})
-                print({'w1': w1_border['word'], 'w2': w2_border['word'], 'similarity': w_sim})
-    save_state(similarities, 'similarity_calculation')
+                # print({'w1': w1_border['word'], 'w2': w2_border['word'], 'similarity': w_sim})
 
-else:
-    print('similarity_calculation: using previous state')
+    th_list = list()
+    if similarities == None:
+        similarities = []
+        for i, w1_border in enumerate(word_borders):
+            if i % 32 != 0:
+                th_list.append(threading.Thread(target=_handle_similarity_calculation, args=(i,w1_border)))
+            else:
+                for th in th_list:
+                    th.start()
+                for th in th_list:
+                    th.join()
+                th_list = []
 
-for s in similarities:
-    print(s)
+            
+        save_state(similarities, 'similarity_calculation')
+
+    else:
+        print('similarity_calculation: using previous state')
+
+    for s in similarities:
+        print(s)
