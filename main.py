@@ -5,8 +5,7 @@ import nltk
 import util
 import json
 from window import getWindowJaccard
-import threading
-
+from multiprocessing import Process
 
 def save_state(data, tag):
     dstr = json.dumps(data)
@@ -63,8 +62,7 @@ if __name__ == "__main__":
         print('border_generation: using previous state')
 
     print('calculating similarities')
-    print(len(word_borders))
-    input()
+
     similarities = load_state('similarity_calculation')
 
     def _handle_similarity_calculation(index:int, word:str):
@@ -75,20 +73,22 @@ if __name__ == "__main__":
                 similarities.append({'w1': w1_border['word'], 'w2': w2_border['word'], 'similarity': w_sim})
                 # print({'w1': w1_border['word'], 'w2': w2_border['word'], 'similarity': w_sim})
 
-    th_list = list()
+    p_list = list()
     if similarities == None:
         similarities = []
+        total_len = len(word_borders)
         for i, w1_border in enumerate(word_borders):
-            if i % 32 != 0:
-                th_list.append(threading.Thread(target=_handle_similarity_calculation, args=(i,w1_border)))
+            if i % 4 != 0:
+                p_list.append(Process(target=_handle_similarity_calculation, args=(i,w1_border)))
             else:
-                for th in th_list:
-                    th.start()
-                for th in th_list:
-                    th.join()
+                for p in p_list:
+                    p.start()
+                for p in p_list:
+                    p.join()
+                print('processed ', i, '/', total_len, 'similarities')
                 th_list = []
 
-            
+
         save_state(similarities, 'similarity_calculation')
 
     else:

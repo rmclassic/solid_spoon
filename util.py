@@ -1,8 +1,11 @@
 import nltk
 import math
 from nltk.corpus import stopwords
-nltk.download('punkt')
-nltk.download('stopwords')
+
+if __name__ == "__main__":
+    nltk.download('punkt')
+    nltk.download('stopwords')
+
 sw = stopwords.words('english')
 
 WINDOW_RADIUS = 2
