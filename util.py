@@ -1,11 +1,8 @@
 import nltk
 import math
 from nltk.corpus import stopwords
-
-if __name__ == "__main__":
-    nltk.download('punkt')
-    nltk.download('stopwords')
-
+nltk.download('punkt')
+nltk.download('stopwords')
 sw = stopwords.words('english')
 
 WINDOW_RADIUS = 2
@@ -14,11 +11,16 @@ def preprocess_document(doc):
     doc = nltk.word_tokenize(doc)
     processed = []
     processed = list(filter(lambda l:len(l) >= 3 and l.isalpha() and l not in sw, list(map(lambda x:x.lower(), doc))))
-    return list(set(processed))
+    return processed
 
-# def preprocess_document_sent(doc):
-#     doc = nltk.sent_tokenize(doc)
-#     return doc
+def preprocess_document_sent(doc):
+    toks = []
+    doc = nltk.sent_tokenize(doc)
+
+    for s in doc:
+        toks.append(preprocess_document(s))
+
+    return toks
 
 def getCollectionVector(col):
     border = {}
@@ -36,7 +38,7 @@ def makeWindowAround(index, doc):
     end_index = index + WINDOW_RADIUS if index + WINDOW_RADIUS < len(doc) else len(doc) - 1
     return doc[start_index:end_index]
 
-def getWordWindows(word, doc):
+def getWordWindows(word, doc, mode):
     last_index = 0
     windows = []
 
@@ -47,11 +49,14 @@ def getWordWindows(word, doc):
             last_index = -1
             continue
 
-        window = makeWindowAround(last_index, doc)
-        windows.append(window)
+        if mode == 1: # word window
+            window = doc
+            windows.append(window)
+            break
+        else: # sentence window
+            window = makeWindowAround(last_index, doc)
 
-    #print(word)
-    #print(windows)
+        windows.append(window)
     return windows
 
 def normalizeBorder(word, border):
@@ -63,17 +68,18 @@ def normalizeBorder(word, border):
     border.update((x, y/max_val) for x, y in border.items())
     return border
 
-def getWordBorder(base_border, word, col):
+def getWordBorder(base_border, word, col, mode):
     border = {}
+    print('generating word border for ', word)
     for doc in col:
-        w_wins = getWordWindows(word, doc)
+        w_wins = getWordWindows(word, doc, mode)
         for window in w_wins:
             for neighbor in window:
                 if border.get(neighbor):
                     border[neighbor] += 1
                 else:
                     border[neighbor] = 1
-    return normalizeBorder(word, border)
+    return {'word': word, 'border': normalizeBorder(word, border)}
 
 
 def calculateBorderSimilarity(w1_border, w2_border):
@@ -86,3 +92,16 @@ def calculateBorderSimilarity(w1_border, w2_border):
         dot_sum += w1_border['border'][neighbor] * w2_border['border'][neighbor] / math.sqrt(len(w1_border['border']) * len(w2_border['border']))
 
     return dot_sum
+
+
+def preprocess_data(data, mode):
+
+    if mode == 1: #Word window
+        for i, doc in enumerate(data):
+            data[i] = preprocess_document(doc)
+    elif mode == 2: #Sentence window
+        temp = []
+        for i, doc in enumerate(data):
+            temp.extend(preprocess_document_sent(doc))
+            data = temp
+    return data
