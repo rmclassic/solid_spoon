@@ -33,7 +33,7 @@ def _handle_similarity_calculation(index:int, word:str, word_borders:list):
 
         if w_sim != 0 and w_sim > 0.1:
             similarities.append({'w1': word['word'], 'w2': w2_border['word'], 'similarity': w_sim})
-            # print({'w1': w1_border['word'], 'w2': w2_border['word'], 'similarity': w_sim})
+
     return similarities
 
 if __name__ == "__main__":
@@ -83,16 +83,6 @@ if __name__ == "__main__":
         similarities = []
         total_len = len(word_borders)
         pool = multiprocessing.Pool()
-        #for i, w1_border in enumerate(word_borders):
-            # if i % 4 != 0:
-            #     p_list.append(Process(target=_handle_similarity_calculation, args=(i,w1_border,word_borders)))
-            # else:
-            #     for p in p_list:
-            #         p.start()
-            #     for p in p_list:
-            #         p.join()
-            #     print('processed ', i, '/', total_len, 'similarities')
-            #     p_list = []
         similarities = pool.starmap(_handle_similarity_calculation, [(i, word_borders[i], word_borders) for i in range(len(word_borders))])
         similarities = list(itertools.chain(*similarities))
         save_state(similarities, 'similarity_calculation')

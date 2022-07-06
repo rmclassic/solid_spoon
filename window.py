@@ -1,16 +1,5 @@
 import pprint
 
-# data = [
-#     'ali goes to school everyday',
-#     'something is wrong with his mind',
-#     'shakespear was a good writer',
-#     'pedram goes to hawaii tomrrow',
-#     'everybody move your body',
-#     'something is happening'
-# ]
-
-
-
 def intersection(l1, l2):
     isc = [value for value in l1 if value in l2 if value != ''];
     return isc
@@ -68,7 +57,6 @@ def getWindowJaccard(data):
             temp['w1'] = all_windows[i][int(len(all_windows[i])/2) + 1]
             temp['w2'] = all_windows[j][int(len(all_windows[j])/2) + 1]
             temp['isc'] = intersection(all_windows[i], all_windows[j])
-            #temp['ejt'] = ejtema(all_windows[i], all_windows[j])
             try:
                 temp['jaccard'] = len(temp['isc']) / (len(sanitize(all_windows[i])) + len(sanitize(all_windows[j])) - len(temp['isc']))
             except:
