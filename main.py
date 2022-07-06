@@ -3,9 +3,10 @@ import sklearn.datasets
 from nltk.tokenize import word_tokenize
 import nltk
 import util
+import itertools
 import json
 from window import getWindowJaccard
-from multiprocessing import Process
+import multiprocessing
 
 def save_state(data, tag):
     dstr = json.dumps(data)
@@ -23,7 +24,17 @@ def load_state(tag):
         return None
     return data
 
+def _handle_similarity_calculation(index:int, word:str, word_borders:list):
+    if index % 100 == 0:
+        print('calculating similarities ', index, '/', len(word_borders))
+    similarities = []
+    for j, w2_border in enumerate(word_borders[index + 1:]):
+        w_sim = util.calculateBorderSimilarity(word, w2_border)
 
+        if w_sim != 0 and w_sim > 0.1:
+            similarities.append({'w1': word['word'], 'w2': w2_border['word'], 'similarity': w_sim})
+            # print({'w1': w1_border['word'], 'w2': w2_border['word'], 'similarity': w_sim})
+    return similarities
 
 if __name__ == "__main__":
 
@@ -65,34 +76,30 @@ if __name__ == "__main__":
 
     similarities = load_state('similarity_calculation')
 
-    def _handle_similarity_calculation(index:int, word:str):
-        for j, w2_border in enumerate(word_borders[index + 1:]):
-            w_sim = util.calculateBorderSimilarity(word, w2_border)
 
-            if w_sim != 0 and w_sim > 0.1:
-                similarities.append({'w1': w1_border['word'], 'w2': w2_border['word'], 'similarity': w_sim})
-                # print({'w1': w1_border['word'], 'w2': w2_border['word'], 'similarity': w_sim})
 
     p_list = list()
     if similarities == None:
         similarities = []
         total_len = len(word_borders)
-        for i, w1_border in enumerate(word_borders):
-            if i % 4 != 0:
-                p_list.append(Process(target=_handle_similarity_calculation, args=(i,w1_border)))
-            else:
-                for p in p_list:
-                    p.start()
-                for p in p_list:
-                    p.join()
-                print('processed ', i, '/', total_len, 'similarities')
-                th_list = []
-
-
+        pool = multiprocessing.Pool()
+        #for i, w1_border in enumerate(word_borders):
+            # if i % 4 != 0:
+            #     p_list.append(Process(target=_handle_similarity_calculation, args=(i,w1_border,word_borders)))
+            # else:
+            #     for p in p_list:
+            #         p.start()
+            #     for p in p_list:
+            #         p.join()
+            #     print('processed ', i, '/', total_len, 'similarities')
+            #     p_list = []
+        similarities = pool.starmap(_handle_similarity_calculation, [(i, word_borders[i], word_borders) for i in range(len(word_borders))])
+        similarities = list(itertools.chain(*similarities))
         save_state(similarities, 'similarity_calculation')
 
     else:
         print('similarity_calculation: using previous state')
+
 
     for s in similarities:
         print(s)
