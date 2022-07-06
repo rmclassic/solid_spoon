@@ -39,28 +39,12 @@ def generateWindows(winlen, data):
     return windows
 
 
-def getWindowJaccard(data):
-    dd = []
-    for s in data:
-        f = s.split(' ')
-        dd.append(f)
-
-    w = generateWindows(2, dd)
-    all_windows = []
-    for s in w:
-        all_windows.append(s)
-
-    jaccards = []
-    for i in range(len(all_windows)):
-        for j in range(i, len(all_windows)):
-            temp = {}
-            temp['w1'] = all_windows[i][int(len(all_windows[i])/2) + 1]
-            temp['w2'] = all_windows[j][int(len(all_windows[j])/2) + 1]
-            temp['isc'] = intersection(all_windows[i], all_windows[j])
-            try:
-                temp['jaccard'] = len(temp['isc']) / (len(sanitize(all_windows[i])) + len(sanitize(all_windows[j])) - len(temp['isc']))
-            except:
-                continue
-            jaccards.append(temp)
-
-    return jaccards
+def getJaccard(w1, w2):
+    if w1 == w2:
+        return 0
+    isc = intersection(w1, w2)
+    try:
+        jacc = len(temp['isc']) / (len(w2) + len(w1) - len(isc))
+        return jacc
+    except:
+        return 0

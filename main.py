@@ -37,7 +37,7 @@ def _handle_similarity_calculation(index:int, word:str, word_borders:list):
     return similarities
 
 if __name__ == "__main__":
-    mode = input('Choose mode:\n1. Word window\n2. Sentence window\n3. Letter window')
+    mode = input('Choose mode:\n1. Word window\n2. Sentence window\n3. Letter window\nmode: ')
     mode = int(mode)
 
     newsgroups_train = fetch_20newsgroups(subset='train', remove=('headers', 'footers', 'quotes'))
@@ -54,34 +54,31 @@ if __name__ == "__main__":
 
     base_border = util.getCollectionVector(data)
 
-    word_borders = load_state('border_generation')
+    if mode != 3: #no letter window
+        word_borders = load_state('border_generation')
 
-    if word_borders == None:
-        word_borders = []
-        # for i, word in enumerate(base_border):
-        #     if i % 100 == 0:
-        #         print('generating word border for \'' + word + '\':' , i, '/', len(base_border))
-        #
-        #     w_border = util.getWordBorder(base_border, word, data, mode)
-        #     word_borders.append({'word': word, 'border': w_border})
-        pool = multiprocessing.Pool()
-        word_borders = pool.starmap(util.getWordBorder, [(base_border, word, data, mode) for _, word in enumerate(base_border)])
+        if word_borders == None:
+            word_borders = []
+            pool = multiprocessing.Pool()
+            word_borders = pool.starmap(util.getWordBorder, [(base_border, word, data, mode) for _, word in enumerate(base_border)])
 
-        save_state(word_borders, 'border_generation')
-    else:
-        print('border_generation: using previous state')
+            save_state(word_borders, 'border_generation')
+        else:
+            print('border_generation: using previous state')
 
     print('calculating similarities')
 
     similarities = load_state('similarity_calculation')
 
-    p_list = list()
     if similarities == None:
         similarities = []
-        total_len = len(word_borders)
-        pool = multiprocessing.Pool()
-        similarities = pool.starmap(_handle_similarity_calculation, [(i, word_borders[i], word_borders) for i in range(len(word_borders))])
-        similarities = list(itertools.chain(*similarities))
+        if mode != 3:
+            total_len = len(word_borders)
+            pool = multiprocessing.Pool()
+            similarities = pool.starmap(_handle_similarity_calculation, [(i, word_borders[i], word_borders) for i in range(len(word_borders))])
+            similarities = list(itertools.chain(*similarities))
+        else:
+            
         save_state(similarities, 'similarity_calculation')
     else:
         print('similarity_calculation: using previous state')
