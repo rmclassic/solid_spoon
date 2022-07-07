@@ -44,7 +44,7 @@ def getJaccard(w1, w2):
         return 0
     isc = intersection(w1, w2)
     try:
-        jacc = len(temp['isc']) / (len(w2) + len(w1) - len(isc))
-        return jacc
+        jacc = len(isc) / (len(w2) + len(w1) - len(isc))
+        return {'w1': w1, 'w2': w2, 'similarity': jacc}
     except:
-        return 0
+        return

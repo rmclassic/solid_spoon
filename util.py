@@ -5,7 +5,7 @@ nltk.download('punkt')
 nltk.download('stopwords')
 sw = stopwords.words('english')
 
-WINDOW_RADIUS = 2
+WINDOW_RADIUS = 4
 
 def preprocess_document(doc):
     doc = nltk.word_tokenize(doc)
@@ -27,7 +27,6 @@ def getCollectionVector(col):
     for index, doc in enumerate(col):
         if index % 100 == 0:
             print('processed', index, 'docs')
-
         for w in doc:
             if w not in border:
                 border[w] = 0
@@ -82,6 +81,14 @@ def getWordBorder(base_border, word, col, mode):
     return {'word': word, 'border': normalizeBorder(word, border)}
 
 
+def getDocumentBorder(base_border, doc):
+    d_border = {}
+    for w in base_border:
+        c = doc.count(w)
+        if c > 0:
+            d_border[w] = c
+    return d_border
+
 def calculateBorderSimilarity(w1_border, w2_border):
     dot_sum = 0
 
@@ -95,8 +102,7 @@ def calculateBorderSimilarity(w1_border, w2_border):
 
 
 def preprocess_data(data, mode):
-
-    if mode == 1: #Word window
+    if mode == 1 or mode == 3: #Word window
         for i, doc in enumerate(data):
             data[i] = preprocess_document(doc)
     elif mode == 2: #Sentence window
